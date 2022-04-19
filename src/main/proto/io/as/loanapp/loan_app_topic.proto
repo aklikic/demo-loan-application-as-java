@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package io.as.loanapp;
+
+import "google/api/annotations.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "akkaserverless/annotations.proto";
+
+import "io/as/loanapp/domain/loan_app_domain.proto";
+
+option java_outer_classname = "LoanAppToTopicApi";
+
+message ApprovedTopic {
+  string loan_app_id = 1;
+  google.protobuf.Timestamp event_timestamp = 2;
+}
+
+message DeclinedTopic {
+  string loan_app_id = 1;
+  string reason = 2;
+  google.protobuf.Timestamp event_timestamp = 3;
+}
+
+service LoanAppToTopic {
+  option (akkaserverless.codegen) = {
+    action: {}
+  };
+
+  rpc OnApproved(domain.Approved) returns (ApprovedTopic) {
+    option (akkaserverless.method).eventing.in = {
+      event_sourced_entity: "loanapp"
+    };
+    option (akkaserverless.method).eventing.out = {
+      topic:  "loanapp-topic"
+    };
+  }
+
+  rpc OnDeclined(domain.Declined) returns (DeclinedTopic) {
+    option (akkaserverless.method).eventing.in = {
+      event_sourced_entity: "loanapp"
+    };
+    option (akkaserverless.method).eventing.out = {
+      topic:  "loanapp-topic"
+    };
+  }
+
+  rpc IgnoreOtherEvents(google.protobuf.Any) returns (google.protobuf.Empty) {
+    option (akkaserverless.method).eventing.in = {
+      event_sourced_entity: "loanapp"
+    };
+  }
+}
